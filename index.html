@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Kaj Freelance Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky top bar with role switcher, one centered 1120px column, panels and list rows for scanning, escrow states shown as pills. */
+:root{
+  --bg:#F3F5F9;--surface:#FFFFFF;--surface-2:#ECEFF6;--ink:#141A2D;--muted:#586079;--line:#DADFEA;
+  --accent:#2547D0;--accent-ink:#FFFFFF;--accent-soft:#E3E9FC;
+  --amber:#8C5A00;--amber-soft:#FBEFD2;--good:#13734B;--good-soft:#DDF2E7;--bad:#B3261E;--bad-soft:#FBE3E0;
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1220;--surface:#171B2E;--surface-2:#1F2440;--ink:#E8EAF5;--muted:#9AA1C2;--line:#2B3152;
+  --accent:#7E97FF;--accent-ink:#0F1220;--accent-soft:#232C5C;
+  --amber:#E6B450;--amber-soft:#3A2F12;--good:#5BD19A;--good-soft:#143427;--bad:#FF8A80;--bad-soft:#3D1A1A;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1220;--surface:#171B2E;--surface-2:#1F2440;--ink:#E8EAF5;--muted:#9AA1C2;--line:#2B3152;
+  --accent:#7E97FF;--accent-ink:#0F1220;--accent-soft:#232C5C;
+  --amber:#E6B450;--amber-soft:#3A2F12;--good:#5BD19A;--good-soft:#143427;--bad:#FF8A80;--bad-soft:#3D1A1A;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(1.9rem,4.5vw,2.9rem);font-weight:800}
+h2{font-size:1.4rem;font-weight:800}
+h3{font-size:1.08rem;font-weight:800}
+h4{font-size:.92rem;font-weight:800}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1120px;margin-inline:auto;padding-inline:16px}
+main.wrap{padding-block:24px 56px;min-height:60vh}
+.muted{color:var(--muted)}.small{font-size:.85rem}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stack{display:grid;gap:12px}
+.stack-lg{display:grid;gap:24px}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:var(--surface);padding:8px;z-index:50}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:8px;background:none;border:0;padding:0;cursor:pointer;font:800 1.45rem var(--f-display);letter-spacing:-.02em}
+.brand .dot{width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block;transform:rotate(45deg)}
+.nav{display:flex;gap:2px;overflow-x:auto;order:3;flex:1 1 100%;scrollbar-width:thin}
+@media (min-width:980px){.nav{order:0;flex:1 1 auto}}
+.nav-btn{background:none;border:0;padding:8px 12px;border-radius:6px;cursor:pointer;color:var(--muted);white-space:nowrap;font-weight:500}
+.nav-btn:hover{color:var(--ink);background:var(--surface-2)}
+.nav-btn[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+.who{display:flex;align-items:center;gap:10px;margin-left:auto}
+.roles{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.role-btn{background:var(--surface);border:0;padding:6px 12px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--muted)}
+.role-btn+.role-btn{border-left:1px solid var(--line)}
+.role-btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font:700 .8rem var(--f-display)}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:8px 14px;cursor:pointer;font-weight:500;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.quiet{border-color:transparent;background:none;color:var(--muted)}
+.btn.sm{padding:5px 10px;font-size:.88rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.linkish{background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.linkish:hover{color:var(--accent)}
+label{display:grid;gap:4px;font-weight:500;font-size:.92rem;min-width:0}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+input[type=checkbox],input[type=radio]{width:auto}
+textarea{resize:vertical}
+.form{display:grid;gap:12px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.check{display:flex;align-items:center;gap:8px;font-weight:500}
+.file input{display:none}
+
+/* surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.panel>h3{margin-bottom:10px}
+.page-head{display:grid;gap:6px;margin-bottom:18px}
+.sub{color:var(--muted);max-width:62ch}
+.split{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:880px){.split{grid-template-columns:minmax(0,1fr)}}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.empty{padding:28px 18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
+
+/* badges and pills */
+.badges{display:flex;flex-wrap:wrap;gap:4px}
+.badge,.pill{display:inline-block;border-radius:99px;padding:2px 9px;font-size:.76rem;font-weight:600;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.badge.ok,.pill.good{background:var(--good-soft);color:var(--good)}
+.badge.warn,.pill.hold{background:var(--amber-soft);color:var(--amber)}
+.badge.top,.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.badge.no{background:var(--surface-2);color:var(--muted)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:5px;padding:1px 8px;font-size:.8rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.rating{font-weight:600;white-space:nowrap}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:center;padding-block:8px 28px}
+@media (max-width:880px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero p.lead{font-size:1.1rem;color:var(--muted);max-width:52ch;margin-top:12px}
+.hero-search{display:flex;gap:8px;margin-top:20px;max-width:520px}
+.eyebrow{font:500 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ledger{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.steps{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:0}
+.steps li{display:flex;justify-content:space-between;gap:12px;padding:10px 0 10px 24px;position:relative;border-left:2px solid var(--line);margin-left:6px}
+.steps li::before{content:"";position:absolute;left:-7px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--good);border:2px solid var(--surface)}
+.steps li.now::before{background:var(--amber)}
+.steps b{font-family:var(--f-mono);font-weight:500}
+.ledger-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem}
+.probs{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.prob{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px 20px;align-items:center;padding:14px 18px}
+.prob+.prob{border-top:1px solid var(--line)}
+@media (max-width:760px){.prob{grid-template-columns:minmax(0,1fr)}}
+.prob .p{color:var(--muted)}
+
+/* job list */
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end;margin-bottom:14px}
+@media (max-width:760px){.filters{grid-template-columns:minmax(0,1fr)}}
+.job{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;cursor:pointer}
+.job:hover{border-color:var(--muted)}
+@media (max-width:640px){.job{grid-template-columns:minmax(0,1fr)}}
+.job-main{display:grid;gap:6px;min-width:0}
+.excerpt{color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{color:var(--muted);font-size:.85rem}
+.job-side{display:grid;gap:6px;align-content:start}
+.budget{font:500 1.15rem var(--f-mono)}
+.budget small{font-size:.75rem;color:var(--muted)}
+
+/* fees */
+.fee-rows{margin:0;display:grid;gap:4px;font-size:.9rem}
+.fee-rows div{display:flex;justify-content:space-between;gap:12px}
+.fee-rows dt{color:var(--muted)}.fee-rows dd{margin:0;font-family:var(--f-mono)}
+.fee-rows .total{border-top:1px solid var(--line);padding-top:4px;font-weight:600}
+.fee-rows .total dt{color:var(--ink)}
+
+/* contracts */
+.k-card{display:grid;gap:8px;cursor:pointer}
+.k-card:hover{border-color:var(--muted)}
+.k-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+.need{color:var(--amber);font-weight:600;font-size:.88rem}
+.sumstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sumstrip div{background:var(--surface);padding:12px 16px;display:grid;gap:2px}
+.sumstrip span{font-size:.78rem;color:var(--muted)}
+.sumstrip b{font:500 1.15rem var(--f-mono)}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tab[aria-current="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.ms{display:grid;gap:10px}
+.ms-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:start}
+.ms-amt{font:500 1.2rem var(--f-mono)}
+.ms-note{background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:.9rem;display:grid;gap:2px}
+.hist{margin:0;padding:0;list-style:none;font-size:.82rem;color:var(--muted);display:grid;gap:2px}
+
+/* messages */
+.thread{display:grid;gap:10px;max-height:460px;overflow-y:auto;padding:4px}
+.msg{max-width:82%;background:var(--surface-2);border-radius:10px;padding:8px 12px;display:grid;gap:2px}
+.msg.mine{justify-self:end;background:var(--accent-soft)}
+.msg .by{font-size:.78rem;color:var(--muted)}
+
+/* time */
+.act{display:inline-block;width:72px;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;vertical-align:middle}
+.act i{display:block;height:100%;background:var(--accent)}
+.clock{font:500 2rem var(--f-mono)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{text-align:left;font-size:.78rem;color:var(--muted);font-weight:600;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+
+/* admin */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px}
+.tile span{font-size:.8rem;color:var(--muted)}
+.tile b{font:500 1.5rem var(--f-mono)}
+.tile.attn b{color:var(--amber)}
+.evi{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.evi section{background:var(--surface-2);border-radius:8px;padding:12px;display:grid;gap:6px;align-content:start;min-width:0;font-size:.88rem}
+
+/* chart */
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font:11px var(--f-mono)}
+.chart .grid{stroke:var(--line);stroke-width:1;fill:none}
+.chart .rev{stroke:var(--accent);stroke-width:2.5;fill:none}
+.chart .cost{stroke:var(--bad);stroke-width:2;stroke-dasharray:6 4;fill:none}
+.chart .loss{fill:var(--bad-soft)}.chart .gain{fill:var(--good-soft)}
+.chart .bep{fill:var(--ink)}
+.chart .lbl{fill:var(--ink);font-weight:500}
+
+.stars{display:flex;gap:6px;border:0;padding:0;margin:0}
+.stars legend{font-weight:500;font-size:.92rem;margin-bottom:4px;padding:0}
+.stars label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer}
+.foot{padding-block:24px 40px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:min(92vw,520px);z-index:60;font-size:.92rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:700px){.who-name{display:none}}
+</style>
+
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap top-in">
+    <button class="brand" data-act="go" data-view="home" aria-label="Kaj home"><span class="dot"></span>Kaj</button>
+    <nav id="nav" class="nav" aria-label="Main"></nav>
+    <div class="who" id="who"></div>
+  </div>
+</header>
+<main id="main" class="wrap"></main>
+<footer class="wrap foot">
+  <p>Prototype for CSE346, Section 18, Group 5, Southeast University. Sample data only: it resets when the page reloads and no real payments are made.</p>
+  <p>Team: Ahnaf Chowdhury Labib, Aninda Paul, Sadian Rafiq Niha, Tasin Ahmed Rayhan.</p>
+</footer>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(function(){
+'use strict';
+var FEE=0.10, CONNECT_COST=4, DAY=864e5, HOUR=36e5, T0=Date.now();
+function ago(d,h,m){return T0-(d||0)*DAY-(h||0)*HOUR-(m||0)*6e4;}
+function $(s,r){return (r||document).querySelector(s);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function money(n){n=Math.round(n*100)/100;return '$'+n.toLocaleString('en-US',{minimumFractionDigits:Number.isInteger(n)?0:2,maximumFractionDigits:2});}
+function uid(p){return p+Math.random().toString(36).slice(2,7);}
+function fmtDate(t){return new Date(t).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
+function fmtDT(t){return new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
+function rel(t){var d=Date.now()-t;if(d<6e4)return 'just now';if(d<HOUR)return Math.floor(d/6e4)+' min ago';if(d<DAY)return Math.floor(d/HOUR)+' h ago';return Math.floor(d/DAY)+' d ago';}
+function initials(n){return n.split(' ').map(function(w){return w[0];}).slice(0,2).join('');}
+function hm(min){return Math.floor(min/60)+'h '+String(Math.round(min%60)).padStart(2,'0')+'m';}
+function byId(a,id){return a.find(function(x){return x.id===id;});}
+function net(a){return a*(1-FEE);}
+
+/* ---------- sample data ---------- */
+var U={
+ f1:{id:'f1',kind:'freelancer',name:'Tanvir Rahman',title:'Full-stack developer',rate:30,rating:4.9,jobs:23,idStatus:'verified',skills:['React','Node.js','MySQL','REST APIs'],city:'Dhaka',connects:36},
+ f2:{id:'f2',kind:'freelancer',name:'Sumaiya Akter',title:'UI/UX designer',rate:28,rating:4.8,jobs:41,idStatus:'verified',skills:['Figma','Mobile UI','Branding'],city:'Chattogram'},
+ f3:{id:'f3',kind:'freelancer',name:'Rafi Ahmed',title:'Web developer',rate:18,rating:0,jobs:0,idStatus:'none',skills:['PHP','Laravel','WordPress'],city:'Sylhet'},
+ f4:{id:'f4',kind:'freelancer',name:'Mehzabin Chowdhury',title:'Content writer',rate:15,rating:4.7,jobs:6,idStatus:'verified',skills:['Bangla copy','SEO','Editing'],city:'Dhaka'},
+ f5:{id:'f5',kind:'freelancer',name:'Imran Hossain',title:'Mobile developer',rate:35,rating:4.6,jobs:9,idStatus:'pending',skills:['Flutter','Firebase','Android'],city:'Rajshahi'},
+ c1:{id:'c1',kind:'client',name:'Nusrat Jahan',company:'Dhaka Bites Ltd',rating:4.8,jobs:14,spent:18400,idStatus:'verified',paymentVerified:true,since:2023},
+ c2:{id:'c2',kind:'client',name:'Farhan Kabir',company:'Padma Logistics',rating:4.5,jobs:8,spent:9200,idStatus:'none',paymentVerified:true,since:2024},
+ c3:{id:'c3',kind:'client',name:'Lamia Sultana',company:'Greenline Studio',rating:0,jobs:0,spent:0,idStatus:'pending',paymentVerified:false,since:2026},
+ c4:{id:'c4',kind:'client',name:'Arif Chowdhury',company:'Meghna Edtech',rating:4.9,jobs:22,spent:31000,idStatus:'verified',paymentVerified:true,since:2021}
+};
+var D={
+ jobs:[
+  {id:'j1',client:'c1',title:'Online ordering web app for a restaurant chain',cat:'Web development',type:'fixed',budget:1200,skills:['React','Node.js','MySQL'],days:30,status:'open',t:ago(2),desc:['Dhaka Bites runs six branches and takes orders by phone. We need a web app where customers browse the menu, place pickup orders and pay by bKash or card.','Branch staff need a screen that shows incoming orders and lets them mark each one as preparing or ready. We will send the menu as a spreadsheet and our logo files. Please include a short setup guide with the final code.']},
+  {id:'j2',client:'c2',title:'Driver tracking dashboard',cat:'Web development',type:'hourly',budget:25,budgetMax:35,skills:['React','Maps API','REST APIs'],days:45,status:'open',t:ago(1),desc:['Padma Logistics needs a dashboard that shows where each delivery van is and which stops are done. GPS data already arrives through an API.','Expect about 60 hours over six weeks. Weekly progress calls and time tracked in the platform.']},
+  {id:'j3',client:'c4',title:'Mobile app UI redesign for a learning app',cat:'Design',type:'fixed',budget:800,skills:['Figma','Mobile UI'],days:21,status:'open',t:ago(3),desc:['Meghna Edtech has an Android app for secondary school students. The screens work but feel crowded.','We need a redesigned home, lesson and progress screen in Figma with a small component library.']},
+  {id:'j4',client:'c4',title:'Course landing pages in WordPress',cat:'Web development',type:'fixed',budget:350,skills:['WordPress','CSS'],days:10,status:'open',t:ago(5),desc:['Build four landing pages from our existing Figma designs. Pages must be fast on mobile data.','Include a contact form that sends to our support inbox.']},
+  {id:'j5',client:'c1',title:'Bangla product descriptions for 40 menu items',cat:'Writing',type:'fixed',budget:120,skills:['Bangla copy','Editing'],days:7,status:'open',t:ago(1,6),desc:['Write short, appetising Bangla descriptions for 40 items on our new online menu. About 25 words each.','We will share ingredient lists and photos.']},
+  {id:'j6',client:'c3',title:'Build a full marketplace app like Daraz, pay after delivery',cat:'Web development',type:'fixed',budget:5000,skills:['PHP','MySQL','Mobile'],days:60,status:'open',t:ago(0,5),desc:['Need a complete marketplace with seller dashboards, mobile apps and payments. Send a working demo first.','Payment only after I approve everything. No milestones.']},
+  {id:'j7',client:'c2',title:'Monthly sales data cleanup and dashboard',cat:'Data',type:'fixed',budget:450,skills:['Excel','SQL','Power BI'],days:14,status:'open',t:ago(4),desc:['We export sales from three branches into messy spreadsheets. Clean them, merge them and build a monthly dashboard.','Documentation of the cleaning steps is required so our team can repeat it.']},
+  {id:'j8',client:'c1',title:'Social media graphics pack',cat:'Design',type:'fixed',budget:200,skills:['Figma','Branding'],days:7,status:'pending_approval',t:ago(0,1),desc:['Twelve post templates and four story templates in our brand colours, editable in Canva or Figma.']}
+ ],
+ proposals:[
+  {id:'p1',jobId:'j1',fid:'f3',bid:950,days:18,letter:'I have built three ordering systems in Laravel and can deliver a working pickup flow in two weeks. I would add a simple staff screen for order status.',status:'submitted',t:ago(1,4)},
+  {id:'p2',jobId:'j1',fid:'f5',bid:1150,days:24,letter:'I build mobile-first ordering apps and can add push alerts for branch staff. I can start this week and share weekly builds.',status:'submitted',t:ago(1,1)},
+  {id:'p3',jobId:'j5',fid:'f4',bid:110,days:5,letter:'I write Bangla food copy for two Dhaka cafes. I will send five sample descriptions first so you can approve the tone.',status:'submitted',t:ago(0,8)},
+  {id:'p4',jobId:'j2',fid:'f1',bid:30,days:42,letter:'I have built live-tracking dashboards with React and Leaflet. I can show vans, stops and delays on one screen and track my hours in the platform.',status:'submitted',t:ago(0,20)},
+  {id:'p5',jobId:'j3',fid:'f2',bid:780,days:18,letter:'I redesigned two learning apps last year. I would start with the lesson screen and deliver a component library alongside.',status:'submitted',t:ago(2,2)}
+ ],
+ contracts:[
+  {id:'k1',title:'Inventory sync API',client:'c1',freelancer:'f1',type:'fixed',status:'active',t:ago(20),milestones:[
+    {id:'m11',title:'API design and database schema',amount:200,status:'released',files:[{file:'schema-v1.pdf',note:'ERD and endpoint list attached.',t:ago(14),version:1}],history:[{t:ago(18),text:'Escrow funded by client'},{t:ago(14),text:'Work submitted (v1)'},{t:ago(13),text:'Approved and released'}]},
+    {id:'m12',title:'Sync service with branch stock updates',amount:400,status:'submitted',files:[{file:'sync-service-v1.zip',note:'First pass of the sync worker.',t:ago(9),version:1},{file:'sync-service-v2.zip',note:'Includes retry queue and a README for setup.',t:ago(3),version:2}],history:[{t:ago(12),text:'Escrow funded by client'},{t:ago(9),text:'Work submitted (v1)'},{t:ago(8),text:'Revision requested: add retry on failed branch calls'},{t:ago(3),text:'Work submitted (v2)'}]},
+    {id:'m13',title:'Testing and handover',amount:250,status:'unfunded',files:[],history:[]}]},
+  {id:'k2',title:'Menu management dashboard (maintenance)',client:'c1',freelancer:'f1',type:'hourly',rate:30,weeklyLimit:20,status:'active',t:ago(30),milestones:[],time:[
+    {id:'e1',t:ago(9,2),minutes:120,activity:78,memo:'Fix category sorting bug',paid:true},
+    {id:'e2',t:ago(8,3),minutes:90,activity:65,memo:'Add image upload for menu items',paid:true},
+    {id:'e3',t:ago(3,4),minutes:150,activity:82,memo:'Menu item availability toggle',paid:false},
+    {id:'e4',t:ago(2,5),minutes:75,activity:71,memo:'Write tests for toggle',paid:false},
+    {id:'e5',t:ago(1,2),minutes:105,activity:74,memo:'Price history table',paid:false}]},
+  {id:'k3',title:'Payment gateway integration',client:'c1',freelancer:'f1',type:'fixed',status:'completed',t:ago(60),milestones:[
+    {id:'m31',title:'Full delivery',amount:350,status:'released',files:[{file:'gateway-final.zip',note:'bKash and card flows with test cases.',t:ago(34),version:1}],history:[{t:ago(45),text:'Escrow funded by client'},{t:ago(34),text:'Work submitted (v1)'},{t:ago(32),text:'Approved and released'}]}]},
+  {id:'k4',title:'Fleet report export',client:'c2',freelancer:'f3',type:'fixed',status:'disputed',t:ago(16),milestones:[
+    {id:'m41',title:'CSV and PDF export',amount:300,status:'disputed',files:[{file:'export-module.zip',note:'CSV and PDF export done as described.',t:ago(5),version:1}],history:[{t:ago(15),text:'Escrow funded by client'},{t:ago(5),text:'Work submitted (v1)'},{t:ago(3),text:'Dispute opened by client'}]}]}
+ ],
+ msgs:{
+  k1:[{id:'a1',from:'client',text:'The retry queue looks good. Can you also log failed calls to a table so the branches can see them?',files:[],t:ago(3,2)},{id:'a2',from:'freelancer',text:'Logging is in v2. I added a failed_calls table and a short note in the README.',files:['sync-service-v2.zip'],t:ago(3)}],
+  k2:[{id:'b1',from:'freelancer',text:'Toggle is live on staging. Tests are next.',files:[],t:ago(3,1)}],
+  k3:[],
+  k4:[{id:'c1',from:'client',text:'The PDF export must include driver ID and route code as in the brief.',files:[],t:ago(10)},{id:'c2',from:'freelancer',text:'Those two columns were not in the brief I received. I can add them as a new paid milestone.',files:[],t:ago(9)},{id:'c3',from:'client',text:'They were in section 3 of the brief. I will not release payment without them.',files:[],t:ago(4)}]
+ },
+ disputes:[{id:'d1',kid:'k4',mid:'m41',openedBy:'client',reason:'The PDF export misses the columns listed in the brief (driver ID, route code).',t:ago(3),status:'open'}],
+ verifs:[
+  {id:'v1',uid:'f5',doc:'Government ID and selfie',t:ago(1,3),status:'pending'},
+  {id:'v2',uid:'c3',doc:'Government ID and selfie',t:ago(0,6),status:'pending'}],
+ reports:[{id:'r1',jobId:'j6',by:'f2',reason:'Asks for a full working app before any payment and has no verified payment method.',t:ago(0,3),status:'open'}],
+ reviews:[
+  {id:'rv1',kid:'old1',fromRole:'client',author:'Meghna Edtech',to:'f1',stars:5,text:'Delivered early and documented everything.',t:ago(50)},
+  {id:'rv2',kid:'old2',fromRole:'client',author:'Padma Logistics',to:'f1',stars:5,text:'Clear updates and no surprises on the invoice.',t:ago(90)}],
+ logs:[
+  {id:'l1',t:ago(3),who:'client',text:'Dispute-free: milestone "Sync service with branch stock updates" resubmitted as v2 by freelancer',kid:'k1'},
+  {id:'l2',t:ago(3),who:'client',text:'Dispute opened on "CSV and PDF export" by client',kid:'k4'},
+  {id:'l3',t:ago(0,6),who:'freelancer',text:'ID verification requested by Lamia Sultana',kid:null},
+  {id:'l4',t:ago(0,1),who:'client',text:'Job "Social media graphics pack" sent for admin review',kid:null}]
+};
+D.logs[0].text='Milestone "Sync service with branch stock updates" resubmitted as v2';
+D.logs[0].who='freelancer';
+
+/* ---------- state ---------- */
+var ROLE_LABEL={freelancer:'Freelancer',client:'Client',admin:'Admin'};
+var NAV={
+ freelancer:[['home','Home'],['browse','Find work'],['proposals','Proposals'],['contracts','Contracts'],['earnings','Earnings'],['profile','Profile']],
+ client:[['home','Home'],['jobs','My jobs'],['post','Post a job'],['talent','Find talent'],['contracts','Contracts'],['profile','Profile']],
+ admin:[['admin','Overview'],['verify','Verification'],['approve','Job review'],['disputes','Disputes'],['contracts','Contracts'],['audit','Audit log']]
+};
+var CATS=['Web development','Design','Writing','Data'];
+var S={role:'freelancer',view:'home',jobId:null,kid:null,tab:'milestones',q:'',cat:'All',type:'any',ver:false,openForm:null,hire:null,tracker:null,reportOpen:false,
+  plan:{rate:30,fee:10,c:{hardware:600,network:360,membership:240,connects:400,software:800}}};
+var VIEWS={}, ACT={}, FORM={};
+var timerId=null;
+
+function cur(){return S.role==='freelancer'?U.f1:S.role==='client'?U.c1:{name:'Admin Desk',kind:'admin'};}
+function log(who,text,kid){D.logs.unshift({id:uid('l'),t:Date.now(),who:who,text:text,kid:kid||null});}
+function toast(msg){var el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){el.hidden=true;},3600);}
+function empty(msg){return '<div class="empty">'+esc(msg)+'</div>';}
+function badges(u){
+  var h=u.idStatus==='verified'?'<span class="badge ok">ID verified</span>':u.idStatus==='pending'?'<span class="badge warn">ID pending</span>':'<span class="badge no">ID not verified</span>';
+  if(u.kind==='client')h+=u.paymentVerified?'<span class="badge ok">Payment verified</span>':'<span class="badge warn">Payment not verified</span>';
+  if(u.kind==='freelancer'){if(u.rating>=4.8&&u.jobs>=10)h+='<span class="badge top">Top rated</span>';else if(u.idStatus==='verified'&&u.jobs<10)h+='<span class="badge top">Rising talent</span>';}
+  return '<span class="badges">'+h+'</span>';
+}
+function ratingOf(u){return u.jobs?'<span class="rating">'+u.rating.toFixed(1)+' <span aria-hidden="true">★</span> <span class="muted small">('+u.jobs+')</span></span>':'<span class="muted small">No reviews yet</span>';}
+var PILL={unfunded:['Not funded','pill'],proposed:['Awaiting approval','pill hold'],funded:['In escrow','pill hold'],submitted:['Submitted','pill acc'],revision:['Revision requested','pill hold'],disputed:['Disputed','pill bad'],released:['Released','pill good'],refunded:['Refunded','pill'],split:['Split by admin','pill'],
+ open:['Open','pill good'],pending_approval:['Awaiting admin review','pill hold'],in_progress:['In progress','pill acc'],rejected:['Not approved','pill bad'],removed:['Removed','pill bad'],
+ active:['Active','pill acc'],completed:['Completed','pill good'],hired:['Hired','pill good'],declined:['Declined','pill'],
+ pending:['Pending','pill hold'],approved:['Approved','pill good'],resolved:['Resolved','pill good']};
+function pill(s){var p=PILL[s]||[s,'pill'];return '<span class="'+p[1]+'">'+p[0]+'</span>';}
+function feePreview(bid,type){
+  var per=type==='hourly'?' per hour':'';bid=+bid||0;
+  return '<dl class="fee-rows"><div><dt>Client pays'+per+'</dt><dd>'+money(bid)+'</dd></div><div><dt>Service fee ('+FEE*100+'%)</dt><dd>−'+money(bid*FEE)+'</dd></div><div class="total"><dt>You receive'+per+'</dt><dd>'+money(net(bid))+'</dd></div></dl>';
+}
+function isFinal(m){return m.status==='released'||m.status==='refunded'||m.status==='split';}
+function paidOut(m){return m.status==='released'?m.amount:m.status==='split'?m.amount/2:0;}
+function escrowOf(k){return k.milestones.filter(function(m){return ['funded','submitted','revision','disputed'].indexOf(m.status)>-1;}).reduce(function(s,m){return s+m.amount;},0);}
+function unpaidMin(k){return (k.time||[]).filter(function(e){return !e.paid;}).reduce(function(s,e){return s+e.minutes;},0);}
+function paidMin(k){return (k.time||[]).filter(function(e){return e.paid;}).reduce(function(s,e){return s+e.minutes;},0);}
+function grossPaid(k){return k.type==='hourly'?paidMin(k)/60*k.rate:k.milestones.reduce(function(s,m){return s+paidOut(m);},0);}
+function weekMin(k){var c=Date.now()-7*DAY;return (k.time||[]).filter(function(e){return e.t>=c;}).reduce(function(s,e){return s+e.minutes;},0);}
+function checkComplete(k){
+  if(k.type==='fixed'&&k.milestones.length&&k.milestones.every(isFinal)&&k.status!=='completed'){k.status='completed';log('system','Contract "'+k.title+'" completed',k.id);}
+}
+
+/* ---------- views: public, jobs ---------- */
+VIEWS.home=function(){
+  var r=S.role;
+  var cta=r==='freelancer'?'<form class="hero-search" data-form="hero-search"><label class="sr" for="hs">Search jobs</label><input id="hs" name="q" placeholder="Search jobs, e.g. React, logo, Bangla copy"><button class="btn primary">Find work</button></form>'
+   :r==='client'?'<div class="row" style="margin-top:20px"><button class="btn primary" data-act="go" data-view="post">Post a job</button><button class="btn" data-act="go" data-view="talent">Find talent</button></div>'
+   :'<div class="row" style="margin-top:20px"><button class="btn primary" data-act="go" data-view="admin">Open admin overview</button></div>';
+  var map={
+   ver:{freelancer:'profile',client:'talent',admin:'verify'},esc:{freelancer:'contracts',client:'contracts',admin:'contracts'},
+   one:{freelancer:'contracts',client:'contracts',admin:'contracts'},fee:{freelancer:'earnings',client:'post',admin:'admin'},dis:{freelancer:'contracts',client:'contracts',admin:'disputes'}};
+  var rows=[
+   ['Fake profiles and misleading job posts','Identity checks with visible badges, ratings and reviews, and an admin review of every new job before it goes live.','ver','See verification'],
+   ['Unpaid work and upfront payment fear','Milestone escrow. The client funds a milestone first and the money moves only after approval.','esc','See escrow'],
+   ['Scattered messages, files and hours','One workspace per contract for messages, files, milestone sign-off and a time tracker.','one','See the workspace'],
+   ['Fee surprises','Service fee and take-home pay shown before you send a proposal, plus a break-even planner.','fee','See the fees'],
+   ['Disputes with no evidence','Messages, file versions, milestone history and time logs stay on record for admin review.','dis','See disputes']];
+  return '<div class="hero"><div><p class="eyebrow">Freelance marketplace</p><h1 style="margin-top:8px">Hire with confidence. Get paid for approved work.</h1>'+
+   '<p class="lead">Kaj holds the client’s money in escrow, keeps every message and file in one workspace, and shows the fees before you bid.</p>'+cta+'</div>'+
+   '<aside class="ledger" aria-label="Example milestone"><p class="eyebrow">Example milestone · Core build</p><ol class="steps">'+
+   '<li><span>Client funds escrow</span><b>$400</b></li><li><span>Freelancer submits work</span><b>v1</b></li><li><span>Client approves within 14 days</span><b>OK</b></li><li class="now"><span>Freelancer receives</span><b>$360</b></li></ol>'+
+   '<p class="ledger-foot">Service fee 10% · $40</p></aside></div>'+
+   '<h2 style="margin:12px 0 12px">Five problems, five built-in answers</h2><div class="probs">'+
+   rows.map(function(x){return '<div class="prob"><h3>'+x[0]+'</h3><p class="p">'+x[1]+'</p><button class="btn sm" data-act="go" data-view="'+map[x[2]][r]+'">'+x[3]+'</button></div>';}).join('')+'</div>';
+};
+function jobCard(j){
+  var c=U[j.client],np=D.proposals.filter(function(p){return p.jobId===j.id;}).length;
+  var bud=j.type==='hourly'?money(j.budget)+'–'+money(j.budgetMax)+'<small>/hr</small>':money(j.budget);
+  return '<article class="job" data-act="open-job" data-id="'+j.id+'"><div class="job-main"><h3><button class="linkish" data-act="open-job" data-id="'+j.id+'">'+esc(j.title)+'</button></h3>'+
+   '<p class="meta">'+esc(j.cat)+' · '+(j.type==='fixed'?'Fixed price':'Hourly')+' · Posted '+rel(j.t)+' · '+np+' proposal'+(np===1?'':'s')+'</p>'+
+   '<p class="excerpt">'+esc(j.desc[0])+'</p><div class="chips">'+j.skills.map(function(s){return '<span class="chip">'+esc(s)+'</span>';}).join('')+'</div></div>'+
+   '<div class="job-side"><div class="budget">'+bud+'</div><div class="small">'+esc(c.company)+'</div>'+badges(c)+'</div></article>';
+}
+VIEWS.browse=function(){
+  return '<div class="page-head"><h1>Find work</h1><p class="sub">Every client shows what has been verified. Fees are shown before you bid.</p></div>'+
+   '<div class="panel filters"><label>Search<input id="q" data-input="q" value="'+esc(S.q)+'" placeholder="Title or skill"></label>'+
+   '<label>Category<select id="cat" data-input="cat"><option>All</option>'+CATS.map(function(c){return '<option'+(S.cat===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></label>'+
+   '<label>Pay type<select id="type" data-input="type"><option value="any">Any</option><option value="fixed"'+(S.type==='fixed'?' selected':'')+'>Fixed price</option><option value="hourly"'+(S.type==='hourly'?' selected':'')+'>Hourly</option></select></label>'+
+   '<label class="check"><input type="checkbox" id="ver" data-input="ver"'+(S.ver?' checked':'')+'>Payment verified only</label></div>'+
+   '<p id="jobcount" class="muted small" style="margin-bottom:10px"></p><div id="joblist" class="stack"></div>';
+};
+function renderJobList(){
+  var q=S.q.trim().toLowerCase();
+  var list=D.jobs.filter(function(j){
+    if(j.status!=='open')return false;
+    if(S.cat!=='All'&&j.cat!==S.cat)return false;
+    if(S.type!=='any'&&j.type!==S.type)return false;
+    if(S.ver&&!U[j.client].paymentVerified)return false;
+    if(q&&(j.title+' '+j.skills.join(' ')+' '+j.cat).toLowerCase().indexOf(q)<0)return false;
+    return true;}).sort(function(a,b){return b.t-a.t;});
+  var el=$('#joblist');if(!el)return;
+  $('#jobcount').textContent=list.length+' open job'+(list.length===1?'':'s');
+  el.innerHTML=list.length?list.map(jobCard).join(''):empty('No jobs match these filters. Clear the search or switch the pay type.');
+}
+function applyPanel(j){
+  var f=U.f1,mine=D.proposals.find(function(p){return p.jobId===j.id&&p.fid==='f1';});
+  if(mine)return '<div class="panel"><h3>Your proposal</h3><p>'+pill(mine.status)+'</p><p style="margin-top:8px">You offered <b class="mono">'+money(mine.bid)+(j.type==='hourly'?'/hr':'')+'</b> and '+mine.days+' days.</p></div>';
+  if(j.status!=='open')return '<div class="panel"><h3>Proposals closed</h3><p class="muted">This job is not accepting proposals.</p></div>';
+  return '<form class="panel form" data-form="apply" data-id="'+j.id+'"><h3>Send a proposal</h3>'+
+   '<label>'+(j.type==='hourly'?'Your hourly rate (USD)':'Your price (USD)')+'<input id="bid" name="bid" type="number" min="1" step="1" required value="'+j.budget+'" data-input="bidpreview" data-type="'+j.type+'"></label>'+
+   '<label>Delivery time (days)<input name="days" type="number" min="1" required value="'+(j.days||14)+'"></label>'+
+   '<label>Cover letter<textarea name="letter" rows="5" required minlength="30" placeholder="Say how you would do this job and what you need from the client."></textarea></label>'+
+   '<div id="feeprev" aria-live="polite">'+feePreview(j.budget,j.type)+'</div>'+
+   '<p class="muted small">Sending a proposal costs '+CONNECT_COST+' Connects. You have '+f.connects+' left.</p>'+
+   '<button class="btn primary"'+(f.connects<CONNECT_COST?' disabled':'')+'>Send proposal</button></form>';
+}
+function propCard(p,j){
+  var f=U[p.fid],hiring=S.hire===p.id;
+  var act='';
+  if(p.status==='submitted'&&j.status==='open'){
+    act=hiring?(j.type==='fixed'?
+      '<form class="form" data-form="hire" data-pid="'+p.id+'"><label>Split the payment into<select name="n"><option value="1">1 milestone</option><option value="2" selected>2 milestones</option><option value="3">3 milestones</option></select></label><p class="muted small">You fund each milestone before work on it starts. Money is released only when you approve.</p><div class="row"><button class="btn primary">Create contract</button><button type="button" class="btn quiet" data-act="close-hire">Cancel</button></div></form>':
+      '<form class="form" data-form="hire" data-pid="'+p.id+'"><label>Weekly limit (hours)<input name="limit" type="number" min="1" max="60" value="20"></label><p class="muted small">Tracked time appears in a work diary you can review before paying.</p><div class="row"><button class="btn primary">Create contract</button><button type="button" class="btn quiet" data-act="close-hire">Cancel</button></div></form>'):
+      '<button class="btn primary sm" data-act="hire-open" data-id="'+p.id+'">Hire '+esc(f.name.split(' ')[0])+'</button>';
+  }
+  return '<div class="panel stack"><div class="ms-head"><div><h3>'+esc(f.name)+'</h3><p class="muted small">'+esc(f.title)+' · '+esc(f.city)+'</p><div class="row" style="margin-top:4px">'+badges(f)+ratingOf(f)+'</div></div>'+
+   '<div style="text-align:right"><div class="budget">'+money(p.bid)+(j.type==='hourly'?'<small>/hr</small>':'')+'</div><p class="muted small">'+p.days+' days · '+rel(p.t)+'</p>'+pill(p.status)+'</div></div><p>'+esc(p.letter)+'</p>'+act+'</div>';
+}
+VIEWS.job=function(){
+  var j=byId(D.jobs,S.jobId);if(!j)return empty('That job is no longer available.');
+  var c=U[j.client],mine=S.role==='client'&&j.client==='c1';
+  var props=D.proposals.filter(function(p){return p.jobId===j.id;});
+  var bud=j.type==='hourly'?money(j.budget)+'–'+money(j.budgetMax)+'<small>/hr</small>':money(j.budget);
+  var warn=!c.paymentVerified&&j.status==='open'?'<div class="panel" style="border-color:var(--amber)"><h3>Check before you apply</h3><p>This client has not verified a payment method. Ask for escrow-funded milestones and do not start work until a milestone is funded.</p></div>':'';
+  var main='<div class="stack-lg"><div class="panel stack"><div class="row">'+pill(j.status)+'<span class="meta">'+esc(j.cat)+' · '+(j.type==='fixed'?'Fixed price':'Hourly')+' · Posted '+rel(j.t)+'</span></div><h1 style="font-size:clamp(1.5rem,3.5vw,2.1rem)">'+esc(j.title)+'</h1>'+
+   j.desc.map(function(d){return '<p>'+esc(d)+'</p>';}).join('')+'<div class="chips">'+j.skills.map(function(s){return '<span class="chip">'+esc(s)+'</span>';}).join('')+'</div></div>'+warn;
+  if(mine||S.role==='admin'){
+    main+='<div class="stack"><h2>Proposals ('+props.length+')</h2>'+(props.length?props.map(function(p){return propCard(p,j);}).join(''):empty('No proposals yet. Verified freelancers will see this job once it is open.'))+'</div>';
+  }
+  main+='</div>';
+  var side='<div class="stack"><div class="panel"><h3>Budget</h3><div class="budget" style="margin-top:6px">'+bud+'</div><p class="muted small" style="margin-top:4px">'+(j.type==='fixed'?'Paid by milestone from escrow':'Paid weekly from tracked hours')+'</p></div>'+
+   '<div class="panel stack"><h3>About the client</h3><div><b>'+esc(c.company)+'</b><p class="muted small">'+esc(c.name)+' · member since '+c.since+'</p></div>'+badges(c)+'<div class="row">'+ratingOf(c)+'</div><p class="small muted">'+money(c.spent)+' paid out on the platform</p></div>';
+  if(S.role==='freelancer')side+=applyPanel(j)+
+   (S.reportOpen?'<form class="panel form" data-form="report" data-id="'+j.id+'"><h3>Report this job</h3><label>Reason<select name="reason"><option>Asks for work before payment</option><option>Misleading description</option><option>Asks to pay or chat outside the platform</option><option>Other</option></select></label><label>Details<textarea name="text" rows="3" required></textarea></label><div class="row"><button class="btn primary sm">Send to admin</button><button type="button" class="btn quiet sm" data-act="toggle-report">Cancel</button></div></form>':'<button class="btn quiet sm" data-act="toggle-report">Report this job</button>');
+  if(S.role==='admin'&&j.status==='pending_approval')side+='<div class="panel row"><button class="btn primary" data-act="j-approve" data-id="'+j.id+'">Approve job</button><button class="btn danger" data-act="j-reject" data-id="'+j.id+'">Reject</button></div>';
+  return '<button class="btn quiet sm" data-act="back-jobs" style="margin-bottom:10px">← Back</button><div class="split">'+main+side+'</div></div>';
+};
+VIEWS.proposals=function(){
+  var mine=D.proposals.filter(function(p){return p.fid==='f1';}).sort(function(a,b){return b.t-a.t;});
+  return '<div class="page-head"><h1>Your proposals</h1><p class="sub">Track every proposal and its outcome. Each one cost '+CONNECT_COST+' Connects.</p></div><div class="stack">'+
+   (mine.length?mine.map(function(p){var j=byId(D.jobs,p.jobId);return '<div class="panel ms-head"><div><h3><button class="linkish" data-act="open-job" data-id="'+j.id+'">'+esc(j.title)+'</button></h3><p class="muted small">'+esc(U[j.client].company)+' · sent '+rel(p.t)+'</p></div><div class="row"><span class="mono">'+money(p.bid)+(j.type==='hourly'?'/hr':'')+'</span>'+pill(p.status)+(p.status==='submitted'?'<button class="btn sm quiet" data-act="withdraw" data-id="'+p.id+'">Withdraw</button>':'')+'</div></div>';}).join(''):empty('You have not sent any proposals yet. Browse open jobs to start.'))+'</div>';
+};
+VIEWS.jobs=function(){
+  var mine=D.jobs.filter(function(j){return j.client==='c1';}).sort(function(a,b){return b.t-a.t;});
+  return '<div class="page-head"><h1>My jobs</h1><p class="sub">New jobs are reviewed by an administrator before freelancers can see them.</p></div><div class="stack">'+
+   (mine.length?mine.map(function(j){var n=D.proposals.filter(function(p){return p.jobId===j.id;}).length;return '<div class="panel ms-head"><div><h3><button class="linkish" data-act="open-job" data-id="'+j.id+'">'+esc(j.title)+'</button></h3><p class="muted small">Posted '+rel(j.t)+' · '+n+' proposal'+(n===1?'':'s')+'</p></div><div class="row">'+pill(j.status)+'<button class="btn sm" data-act="open-job" data-id="'+j.id+'">'+(n?'Review proposals':'View')+'</button></div></div>';}).join(''):empty('You have not posted a job yet.'))+'</div>';
+};
+VIEWS.post=function(){
+  var c=U.c1;
+  if(!c.paymentVerified)return '<div class="page-head"><h1>Post a job</h1></div><div class="panel stack"><h3>Verify a payment method first</h3><p class="muted">Freelancers see this badge and trust jobs from verified clients.</p><button class="btn primary" data-act="verify-pay">Verify payment method</button></div>';
+  return '<div class="page-head"><h1>Post a job</h1><p class="sub">An administrator reviews the post before it goes live. Clear scope and a realistic budget get better proposals.</p></div>'+
+   '<form class="panel form" data-form="post" style="max-width:720px"><label>Job title<input name="title" required maxlength="90" placeholder="What do you need built or written?"></label>'+
+   '<div class="form-row"><label>Category<select name="cat">'+CATS.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select></label><label>Pay type<select name="type"><option value="fixed">Fixed price</option><option value="hourly">Hourly</option></select></label></div>'+
+   '<div class="form-row"><label>Budget, or lowest hourly rate (USD)<input name="budget" type="number" min="1" required></label><label>Highest hourly rate (hourly only)<input name="budgetMax" type="number" min="1"></label><label>Expected duration (days)<input name="days" type="number" min="1" value="14"></label></div>'+
+   '<label>Skills (comma separated)<input name="skills" placeholder="React, Node.js"></label>'+
+   '<label>Description<textarea name="desc" rows="6" required minlength="40" placeholder="Describe the work, what you will provide and how you will judge it is done."></textarea></label>'+
+   '<p class="muted small">Fees: freelancers pay a '+FEE*100+'% service fee on what you pay. You pay the agreed price with no added fee.</p><div><button class="btn primary">Send for review</button></div></form>';
+};
+VIEWS.talent=function(){
+  var fs=Object.keys(U).map(function(k){return U[k];}).filter(function(u){return u.kind==='freelancer';});
+  return '<div class="page-head"><h1>Find talent</h1><p class="sub">Verified identities and past reviews are shown on every profile.</p></div><div class="grid-auto">'+
+   fs.map(function(f){return '<div class="panel stack"><div><h3>'+esc(f.name)+'</h3><p class="muted small">'+esc(f.title)+' · '+esc(f.city)+'</p></div>'+badges(f)+'<div class="row">'+ratingOf(f)+'<span class="mono small">'+money(f.rate)+'/hr</span></div><div class="chips">'+f.skills.map(function(s){return '<span class="chip">'+esc(s)+'</span>';}).join('')+'</div><button class="btn sm" data-act="invite" data-id="'+f.id+'">Invite to a job</button></div>';}).join('')+'</div>';
+};
+
+/* ---------- contracts ---------- */
+function myContracts(){
+  return D.contracts.filter(function(k){return S.role==='admin'||(S.role==='client'?k.client==='c1':k.freelancer==='f1');});
+}
+function needOf(k){
+  var r=S.role;
+  if(r==='admin')return k.status==='disputed'?'Dispute open':'';
+  if(r==='client'){
+    if(k.milestones.some(function(m){return m.status==='submitted';}))return 'Work waiting for your review';
+    if(k.milestones.some(function(m){return m.status==='proposed'&&m.by==='freelancer';}))return 'Scope change to approve';
+    if(k.milestones.some(function(m){return m.status==='unfunded';})&&k.status==='active')return 'A milestone needs funding';
+    if(k.type==='hourly'&&unpaidMin(k)>0)return 'Hours waiting for approval';
+  }else{
+    if(k.milestones.some(function(m){return m.status==='funded'||m.status==='revision';}))return 'Funded and ready for you to submit';
+    if(k.milestones.some(function(m){return m.status==='proposed'&&m.by==='client';}))return 'Scope change to approve';
+  }
+  return '';
+}
+VIEWS.contracts=function(){
+  var list=myContracts();
+  return '<div class="page-head"><h1>Contracts</h1><p class="sub">Each contract is one workspace for milestones, messages, files and time.</p></div><div class="stack">'+
+   (list.length?list.map(function(k){
+     var f=U[k.freelancer],c=U[k.client],need=needOf(k);
+     var val=k.type==='fixed'?money(k.milestones.filter(function(m){return m.status!=='proposed';}).reduce(function(s,m){return s+m.amount;},0)):money(k.rate)+'/hr';
+     return '<article class="panel k-card" data-act="open-contract" data-id="'+k.id+'"><div class="k-top"><h3><button class="linkish" data-act="open-contract" data-id="'+k.id+'">'+esc(k.title)+'</button></h3><div class="row">'+pill(k.status)+'</div></div>'+
+      '<p class="muted small">'+esc(c.company)+' with '+esc(f.name)+' · '+(k.type==='fixed'?'Fixed price':'Hourly')+' · started '+fmtDate(k.t)+'</p>'+
+      '<div class="row"><span class="mono">'+val+'</span>'+(k.type==='fixed'?'<span class="muted small">In escrow '+money(escrowOf(k))+'</span>':'<span class="muted small">Unpaid '+hm(unpaidMin(k))+'</span>')+(need?'<span class="need">'+need+'</span>':'')+'</div></article>';}).join(''):empty('No contracts yet. They appear here once a proposal is accepted.'))+'</div>';
+};
+function msCard(k,m,role){
+  var last=m.files[m.files.length-1],a='',form='',of=S.openForm;
+  var open=of&&of.id===m.id?of.type:null;
+  var f=U[k.freelancer];
+  if(m.status==='unfunded'&&role==='client')a='<button class="btn primary sm" data-act="fund" data-kid="'+k.id+'" data-mid="'+m.id+'">Fund escrow '+money(m.amount)+'</button>';
+  if(m.status==='unfunded'&&role==='freelancer')a='<span class="muted small">Waiting for the client to fund escrow before work starts.</span>';
+  if(m.status==='proposed'){
+    if(m.by===role)a='<span class="muted small">Waiting for the other side to accept.</span>';
+    else if(role!=='admin')a='<button class="btn primary sm" data-act="accept-ms" data-kid="'+k.id+'" data-mid="'+m.id+'">Accept</button><button class="btn sm" data-act="decline-ms" data-kid="'+k.id+'" data-mid="'+m.id+'">Decline</button>';
+  }
+  if((m.status==='funded'||m.status==='revision')&&role==='freelancer')a='<button class="btn primary sm" data-act="open-form" data-type="submit" data-id="'+m.id+'">Submit work</button>';
+  if(m.status==='submitted'){
+    if(role==='client')a='<button class="btn primary sm" data-act="approve" data-kid="'+k.id+'" data-mid="'+m.id+'">Approve and release</button><button class="btn sm" data-act="open-form" data-type="revision" data-id="'+m.id+'">Request revision</button><button class="btn sm danger" data-act="open-form" data-type="dispute" data-id="'+m.id+'">Open dispute</button>';
+    if(role==='freelancer')a='<span class="muted small">Waiting for the client to review.</span><button class="btn sm danger" data-act="open-form" data-type="dispute" data-id="'+m.id+'">Open dispute</button>';
+  }
+  if(m.status==='disputed')a='<span class="muted small">Escrow is frozen while an administrator reviews the record.</span>';
+  if(open==='submit')form='<form class="form ms-note" data-form="submit-work" data-kid="'+k.id+'" data-mid="'+m.id+'"><label>Deliverable<input type="file" name="file"></label><label>Note to client<textarea name="note" rows="3" required placeholder="What is included and how to check it."></textarea></label><div class="row"><button class="btn primary sm">Submit for review</button><button type="button" class="btn quiet sm" data-act="close-form">Cancel</button></div></form>';
+  if(open==='revision')form='<form class="form ms-note" data-form="revision" data-kid="'+k.id+'" data-mid="'+m.id+'"><label>What should change?<textarea name="text" rows="3" required></textarea></label><div class="row"><button class="btn primary sm">Send request</button><button type="button" class="btn quiet sm" data-act="close-form">Cancel</button></div></form>';
+  if(open==='dispute')form='<form class="form ms-note" data-form="dispute" data-kid="'+k.id+'" data-mid="'+m.id+'"><label>Reason for the dispute<textarea name="text" rows="3" required></textarea></label><p class="muted small">Funds stay in escrow. An administrator reviews messages, file versions and milestone history before deciding.</p><div class="row"><button class="btn danger sm">Open dispute</button><button type="button" class="btn quiet sm" data-act="close-form">Cancel</button></div></form>';
+  var sub='';
+  if(last&&m.status!=='unfunded'){
+    var left=Math.max(0,14-Math.floor((Date.now()-last.t)/DAY));
+    sub='<div class="ms-note"><span><b>'+esc(last.file)+'</b> · version '+last.version+' · '+rel(last.t)+'</span><span>'+esc(last.note)+'</span>'+(m.status==='submitted'?'<span class="muted small">Review window: '+left+' day'+(left===1?'':'s')+' left</span>':'')+'</div>';
+  }
+  var pay=(m.status==='released')?'<p class="muted small">'+esc(f.name)+' received '+money(net(m.amount))+' after the '+FEE*100+'% service fee.</p>':m.status==='split'?'<p class="muted small">Admin split: '+money(m.amount/2)+' to the freelancer, '+money(m.amount/2)+' back to the client.</p>':m.status==='refunded'?'<p class="muted small">Refunded to the client by an administrator.</p>':'';
+  return '<div class="panel ms"><div class="ms-head"><div><h3>'+esc(m.title)+'</h3><div class="row" style="margin-top:4px">'+pill(m.status)+'</div></div><div style="text-align:right"><div class="ms-amt">'+money(m.amount)+'</div><p class="muted small">Freelancer gets '+money(net(m.amount))+'</p></div></div>'+sub+pay+
+   (a?'<div class="row">'+a+'</div>':'')+form+
+   (m.history.length?'<ul class="hist">'+m.history.slice(-3).map(function(h){return '<li>'+fmtDT(h.t)+' · '+esc(h.text)+'</li>';}).join('')+'</ul>':'')+'</div>';
+}
+function msgTab(k,role){
+  var list=D.msgs[k.id]||[];
+  return '<div class="panel stack"><p class="muted small">Messages and files stay on the contract record and can be reviewed by an administrator in a dispute.</p><div class="thread" id="thread">'+
+   (list.length?list.map(function(m){var mine=m.from===role;return '<div class="msg'+(mine?' mine':'')+'"><span class="by">'+(m.from==='client'?esc(U[k.client].name):esc(U[k.freelancer].name))+' · '+rel(m.t)+'</span><span>'+esc(m.text)+'</span>'+(m.files.length?'<span class="chips">'+m.files.map(function(f){return '<span class="chip">'+esc(f)+'</span>';}).join('')+'</span>':'')+'</div>';}).join(''):empty('No messages yet. Agree on scope here so it is on the record.'))+'</div>'+
+   (role==='admin'?'':'<form class="form" data-form="send-msg" data-kid="'+k.id+'"><label class="sr" for="mt">Message</label><textarea id="mt" name="text" rows="2" required placeholder="Write a message"></textarea><div class="row"><label class="btn sm file" style="display:inline-flex"><input type="file" name="file" data-input="fname"><span>Attach file</span></label><button class="btn primary sm">Send</button></div></form>')+'</div>';
+}
+function timeTab(k,role){
+  var week=weekMin(k),lim=k.weeklyLimit*60,unpaid=unpaidMin(k),amt=unpaid/60*k.rate,tr=S.tracker&&S.tracker.kid===k.id?S.tracker:null;
+  var tracker=role==='freelancer'?'<div class="panel stack"><h3>Time tracker</h3><div class="clock" id="trk-clock">'+(tr?hm(tr.secs):'0h 00m')+'</div><p class="muted small">Demo speed: one second counts as one minute.</p>'+
+    (tr?'<label>What did you work on?<input id="trk-memo" placeholder="Short memo"></label><div><button class="btn danger" data-act="timer-stop">Stop and log</button></div>':'<div><button class="btn primary" data-act="timer-start" data-kid="'+k.id+'">Start tracker</button></div>')+'</div>':'';
+  var rows=(k.time||[]).slice().sort(function(a,b){return b.t-a.t;}).map(function(e){return '<tr><td>'+fmtDT(e.t)+'</td><td class="mono">'+hm(e.minutes)+'</td><td><span class="act" title="Activity '+e.activity+'%"><i style="width:'+e.activity+'%"></i></span> <span class="mono small">'+e.activity+'%</span></td><td>'+esc(e.memo)+'</td><td>'+(e.paid?pill('approved').replace('Approved','Paid'):'<span class="pill hold">Unpaid</span>')+'</td></tr>';}).join('');
+  return '<div class="stack"><div class="sumstrip"><div><span>This week</span><b>'+hm(week)+'</b></div><div><span>Weekly limit</span><b>'+k.weeklyLimit+'h</b></div><div><span>Unpaid hours</span><b>'+hm(unpaid)+'</b></div><div><span>Amount due</span><b>'+money(amt)+'</b></div></div>'+tracker+
+   (role==='client'&&unpaid>0&&k.status==='active'?'<div class="panel row" style="justify-content:space-between"><span>Pay '+hm(unpaid)+' at '+money(k.rate)+'/hr. Freelancer receives '+money(net(amt))+' after the service fee.</span><button class="btn primary" data-act="pay-hours" data-kid="'+k.id+'">Approve and pay '+money(amt)+'</button></div>':'')+
+   '<div class="panel"><h3>Work diary</h3><div class="tbl-wrap"><table><thead><tr><th>Logged</th><th>Time</th><th>Activity</th><th>Memo</th><th>Status</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="muted">No time logged yet.</td></tr>')+'</tbody></table></div></div></div>';
+}
+function reviewTab(k,role){
+  var rs=D.reviews.filter(function(r){return r.kid===k.id;});
+  var mineDone=rs.some(function(r){return r.fromRole===role;});
+  var can=k.status==='completed'&&role!=='admin'&&!mineDone;
+  var form=can?'<form class="panel form" data-form="review" data-kid="'+k.id+'"><h3>Review '+esc(role==='client'?U[k.freelancer].name:U[k.client].name)+'</h3><fieldset class="stars"><legend>Rating</legend>'+[1,2,3,4,5].map(function(n){return '<label><input type="radio" name="stars" value="'+n+'"'+(n===5?' checked':'')+'>'+n+'</label>';}).join('')+'</fieldset><label>Comment<textarea name="text" rows="3" required></textarea></label><div><button class="btn primary">Post review</button></div></form>':'';
+  var note=k.status!=='completed'?'<div class="panel muted">Reviews open when the contract is completed.</div>':'';
+  return '<div class="stack">'+note+form+rs.map(function(r){return '<div class="panel"><div class="row"><b>'+esc(r.author)+'</b><span class="rating">'+r.stars+' ★</span><span class="muted small">'+rel(r.t)+'</span></div><p style="margin-top:6px">'+esc(r.text)+'</p></div>';}).join('')+'</div>';
+}
+function activityTab(k){
+  var l=D.logs.filter(function(x){return x.kid===k.id;});
+  return '<div class="panel"><h3>Activity record</h3><ul class="hist" style="margin-top:8px;font-size:.9rem">'+(l.length?l.map(function(x){return '<li>'+fmtDT(x.t)+' · '+esc(x.text)+'</li>';}).join(''):'<li>No activity yet.</li>')+'</ul></div>';
+}
+VIEWS.contract=function(){
+  var k=byId(D.contracts,S.kid);if(!k)return empty('Contract not found.');
+  var role=S.role,f=U[k.freelancer],c=U[k.client];
+  var tabs=[['milestones',k.type==='fixed'?'Milestones':'Terms'],['messages','Messages'],k.type==='hourly'?['time','Time']:null,['activity','Activity'],['review','Reviews']].filter(Boolean);
+  if(tabs.every(function(t){return t[0]!==S.tab;}))S.tab='milestones';
+  var strip;
+  if(k.type==='fixed'){
+    var val=k.milestones.filter(function(m){return m.status!=='proposed';}).reduce(function(s,m){return s+m.amount;},0);
+    var unf=k.milestones.filter(function(m){return m.status==='unfunded';}).reduce(function(s,m){return s+m.amount;},0);
+    strip='<div class="sumstrip"><div><span>Contract value</span><b>'+money(val)+'</b></div><div><span>In escrow</span><b>'+money(escrowOf(k))+'</b></div><div><span>Paid out</span><b>'+money(grossPaid(k))+'</b></div><div><span>Not funded yet</span><b>'+money(unf)+'</b></div></div>';
+  }else strip='<div class="sumstrip"><div><span>Hourly rate</span><b>'+money(k.rate)+'</b></div><div><span>Hours logged</span><b>'+hm(paidMin(k)+unpaidMin(k))+'</b></div><div><span>Unpaid</span><b>'+money(unpaidMin(k)/60*k.rate)+'</b></div><div><span>Paid out</span><b>'+money(grossPaid(k))+'</b></div></div>';
+  var body='';
+  if(S.tab==='milestones'){
+    if(k.type==='fixed'){
+      body='<div class="stack">'+k.milestones.map(function(m){return msCard(k,m,role);}).join('')+
+       (role!=='admin'&&k.status==='active'?(S.openForm&&S.openForm.type==='scope'?'<form class="panel form" data-form="scope" data-kid="'+k.id+'"><h3>Propose a new milestone</h3><p class="muted small">Extra work needs its own paid milestone, accepted by both sides, before it starts.</p><div class="form-row"><label>Title<input name="title" required></label><label>Amount (USD)<input name="amount" type="number" min="1" required></label></div><div class="row"><button class="btn primary sm">Send for approval</button><button type="button" class="btn quiet sm" data-act="close-form">Cancel</button></div></form>':'<div><button class="btn" data-act="open-form" data-type="scope" data-id="scope">Propose a scope change</button></div>'):'')+'</div>';
+    }else{
+      body='<div class="panel stack"><h3>Hourly terms</h3><p>'+money(k.rate)+' per hour, up to '+k.weeklyLimit+' hours a week. Time is tracked in the platform and paid after the client reviews the work diary.</p>'+
+       (role==='client'&&k.status==='active'?'<div><button class="btn" data-act="end-contract" data-kid="'+k.id+'">End contract</button></div>':'')+'</div>';
+    }
+  }else if(S.tab==='messages')body=msgTab(k,role);
+  else if(S.tab==='time')body=timeTab(k,role);
+  else if(S.tab==='activity')body=activityTab(k);
+  else body=reviewTab(k,role);
+  return '<button class="btn quiet sm" data-act="go" data-view="contracts" style="margin-bottom:10px">← All contracts</button>'+
+   '<div class="page-head"><div class="row">'+pill(k.status)+'</div><h1 style="font-size:clamp(1.5rem,3.5vw,2.1rem)">'+esc(k.title)+'</h1><p class="muted">'+esc(c.company)+' ('+esc(c.name)+') with '+esc(f.name)+'</p></div>'+
+   '<div class="stack-lg">'+strip+'<div class="stack"><div class="tabs" role="group" aria-label="Contract sections">'+tabs.map(function(t){return '<button class="tab" data-act="tab" data-tab="'+t[0]+'"'+(S.tab===t[0]?' aria-current="true"':'')+'>'+t[1]+'</button>';}).join('')+'</div>'+body+'</div></div>';
+};
+
+/* ---------- profile ---------- */
+VIEWS.profile=function(){
+  var u=cur(),rs=D.reviews.filter(function(r){return r.to===u.id;});
+  var vs=D.verifs.find(function(v){return v.uid===u.id&&v.status==='pending';});
+  var idBlock=u.idStatus==='verified'?'<p>Your identity is verified. The badge shows on your proposals and profile.</p>':
+    u.idStatus==='pending'?'<p>Your documents are with an administrator. This usually takes one working day.</p>':
+    '<p>Verified profiles get more replies. An administrator checks a government ID and a selfie.</p><div style="margin-top:10px"><button class="btn primary" data-act="verify-id">Submit ID for verification</button></div>';
+  var pay=u.kind==='client'?'<div class="panel"><h3>Payment method</h3>'+(u.paymentVerified?'<p>Verified. Freelancers see the Payment verified badge on your jobs.</p>':'<p>Not verified yet.</p><div style="margin-top:10px"><button class="btn primary" data-act="verify-pay">Verify payment method</button></div>')+'<p class="muted small" style="margin-top:8px">This prototype collects no card details.</p></div>':'';
+  return '<div class="page-head"><h1>Profile</h1></div><div class="split"><div class="stack-lg"><div class="panel stack"><div class="row"><span class="avatar" style="width:48px;height:48px">'+esc(initials(u.name))+'</span><div><h2>'+esc(u.name)+'</h2><p class="muted">'+esc(u.kind==='client'?u.company:u.title)+'</p></div></div>'+badges(u)+'<div class="row">'+ratingOf(u)+'</div>'+
+   (u.skills?'<div class="chips">'+u.skills.map(function(s){return '<span class="chip">'+esc(s)+'</span>';}).join('')+'</div>':'')+'</div>'+
+   '<div class="stack"><h2>Reviews</h2>'+(rs.length?rs.map(function(r){return '<div class="panel"><div class="row"><b>'+esc(r.author)+'</b><span class="rating">'+r.stars+' ★</span></div><p style="margin-top:6px">'+esc(r.text)+'</p></div>';}).join(''):empty('No reviews yet.'))+'</div></div>'+
+   '<div class="stack"><div class="panel"><h3>Identity verification</h3>'+idBlock+'</div>'+pay+'</div></div>';
+};
+
+/* ---------- earnings and break-even ---------- */
+function niceMax(v){if(v<=0)return 1;var p=Math.pow(10,Math.floor(Math.log10(v))),n=v/p,m=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10;return m*p;}
+function planCalc(){
+  var P=S.plan,fixed=0,k;for(k in P.c)fixed+=+P.c[k]||0;
+  var netHr=P.rate*(1-P.fee/100),bep=netHr>0?fixed/netHr:null;
+  return {fixed:fixed,netHr:netHr,bep:bep};
+}
+function chartSVG(r){
+  var W=640,H=300,ml=58,mr=16,mt=14,mb=40;
+  if(!(r.netHr>0))return '<p class="muted">Net hourly income must be above zero to draw the chart.</p>';
+  var X=niceMax(Math.max(200,(r.bep||0)*2)),v=Math.max(r.fixed*1.5,X*r.netHr),ys=niceMax(v/5),Y=Math.ceil(v/ys)*ys,xs=niceMax(X/8);
+  function sx(x){return ml+x/X*(W-ml-mr);}function sy(y){return mt+(1-y/Y)*(H-mt-mb);}
+  var g='',i;
+  for(i=0;i<=Y+1e-6;i+=ys)g+='<line class="grid" x1="'+ml+'" x2="'+(W-mr)+'" y1="'+sy(i)+'" y2="'+sy(i)+'"/><text x="'+(ml-8)+'" y="'+(sy(i)+4)+'" text-anchor="end">'+i.toLocaleString('en-US')+'</text>';
+  for(i=0;i<=X+1e-6;i+=xs)g+='<line class="grid" x1="'+sx(i)+'" x2="'+sx(i)+'" y1="'+mt+'" y2="'+(H-mb)+'"/><text x="'+sx(i)+'" y="'+(H-mb+16)+'" text-anchor="middle">'+i+'</text>';
+  var b=r.bep,fy=sy(r.fixed);
+  var loss='<polygon class="loss" points="'+sx(0)+','+fy+' '+sx(b)+','+fy+' '+sx(0)+','+sy(0)+'"/>';
+  var gain='<polygon class="gain" points="'+sx(b)+','+fy+' '+sx(X)+','+fy+' '+sx(X)+','+sy(X*r.netHr)+'"/>';
+  var anchor=sx(b)>W*0.65?'end':'start',lx=sx(b)+(anchor==='end'?-10:10);
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Break-even chart: net revenue crosses fixed costs at '+b.toFixed(1)+' billable hours">'+g+loss+gain+
+   '<line class="cost" x1="'+sx(0)+'" x2="'+sx(X)+'" y1="'+fy+'" y2="'+fy+'"/><line class="rev" x1="'+sx(0)+'" y1="'+sy(0)+'" x2="'+sx(X)+'" y2="'+sy(X*r.netHr)+'"/>'+
+   '<circle class="bep" cx="'+sx(b)+'" cy="'+fy+'" r="5"/><text class="lbl" x="'+lx+'" y="'+(fy-12)+'" text-anchor="'+anchor+'">Break-even '+b.toFixed(1)+' h</text>'+
+   '<text x="'+((ml+W-mr)/2)+'" y="'+(H-4)+'" text-anchor="middle">Annual billable hours</text><text x="12" y="'+(mt+8)+'">USD</text></svg>';
+}
+function renderPlanner(){
+  var el=$('#plan-out');if(!el)return;
+  var r=planCalc(),P=S.plan;
+  if(!(r.bep>=0)){el.innerHTML='<p class="muted">Enter a rate above zero and a fee below 100%.</p>';return;}
+  el.innerHTML='<div class="sumstrip"><div><span>Fixed costs a year</span><b>'+money(r.fixed)+'</b></div><div><span>Net pay per hour</span><b>'+money(r.netHr)+'</b></div><div><span>Break-even hours</span><b>'+r.bep.toFixed(1)+'</b></div><div><span>Gross billing needed</span><b>'+money(r.bep*P.rate)+'</b></div></div>'+
+   '<p class="muted" style="margin:10px 0">At 40 hours a week that is '+(r.bep/40).toFixed(1)+' weeks of client work before you earn a profit. Every hour after that is margin.</p>'+chartSVG(r);
+}
+VIEWS.earnings=function(){
+  var mine=D.contracts.filter(function(k){return k.freelancer==='f1';});
+  var earned=mine.reduce(function(s,k){return s+net(grossPaid(k));},0);
+  var held=mine.reduce(function(s,k){return s+escrowOf(k);},0);
+  var P=S.plan,labels={hardware:'Hardware and power',network:'Internet',membership:'Platform membership',connects:'Connects for bidding',software:'Software and tools'};
+  return '<div class="page-head"><h1>Earnings</h1><p class="sub">What you have taken home, what is held for you, and how many hours cover your costs.</p></div><div class="stack-lg">'+
+   '<div class="sumstrip"><div><span>Taken home (after fees)</span><b>'+money(earned)+'</b></div><div><span>In escrow for you</span><b>'+money(held)+'</b></div><div><span>Connects left</span><b>'+U.f1.connects+'</b></div></div>'+
+   '<div class="panel stack"><h2>Break-even planner</h2><p class="muted">Defaults follow the cost-benefit model in the project report: a developer in South Asia billing $30 an hour.</p>'+
+   '<div class="form-row"><label>Hourly rate (USD)<input type="number" min="1" data-input="plan" name="rate" value="'+P.rate+'"></label><label>Service fee (%)<input type="number" min="0" max="99" data-input="plan" name="fee" value="'+P.fee+'"></label></div>'+
+   '<div class="form-row">'+Object.keys(labels).map(function(k){return '<label>'+labels[k]+' (USD a year)<input type="number" min="0" data-input="plan" name="c_'+k+'" value="'+P.c[k]+'"></label>';}).join('')+'</div>'+
+   '<div id="plan-out"></div></div></div>';
+};
+
+/* ---------- admin ---------- */
+VIEWS.admin=function(){
+  var pv=D.verifs.filter(function(v){return v.status==='pending';}).length,pj=D.jobs.filter(function(j){return j.status==='pending_approval';}).length;
+  var od=D.disputes.filter(function(d){return d.status==='open';}).length,orp=D.reports.filter(function(r){return r.status==='open';}).length;
+  var held=D.contracts.reduce(function(s,k){return s+escrowOf(k);},0),fees=D.contracts.reduce(function(s,k){return s+grossPaid(k)*FEE;},0);
+  function tile(l,v,view,attn){return '<button class="tile linkish'+(attn&&v>0?' attn':'')+'" data-act="go" data-view="'+view+'"><span>'+l+'</span><b>'+v+'</b></button>';}
+  var ms=D.contracts.reduce(function(s,k){return s+k.milestones.length+(k.time||[]).length;},0);
+  return '<div class="page-head"><h1>Admin overview</h1><p class="sub">Queues that need a decision come first.</p></div><div class="stack-lg"><div class="tiles">'+
+   tile('Verifications waiting',pv,'verify',1)+tile('Jobs awaiting review',pj+orp,'approve',1)+tile('Open disputes',od,'disputes',1)+
+   '<div class="tile"><span>Held in escrow</span><b>'+money(held)+'</b></div><div class="tile"><span>Service fees earned</span><b>'+money(fees)+'</b></div><div class="tile"><span>Open jobs</span><b>'+D.jobs.filter(function(j){return j.status==='open';}).length+'</b></div></div>'+
+   '<div class="panel"><h3>Records by data store</h3><div class="tbl-wrap"><table><thead><tr><th>Store (from the DFD)</th><th>Holds</th><th>Records</th></tr></thead><tbody>'+
+   '<tr><td>D1 User database</td><td>Accounts, profiles, verification</td><td class="mono">'+Object.keys(U).length+'</td></tr>'+
+   '<tr><td>D2 Project database</td><td>Job posts and contracts</td><td class="mono">'+(D.jobs.length+D.contracts.length)+'</td></tr>'+
+   '<tr><td>D3 Proposal database</td><td>Proposals and hiring decisions</td><td class="mono">'+D.proposals.length+'</td></tr>'+
+   '<tr><td>D4 Payment database</td><td>Milestones and time payments</td><td class="mono">'+ms+'</td></tr>'+
+   '<tr><td>D5 Review database</td><td>Ratings and reviews</td><td class="mono">'+D.reviews.length+'</td></tr></tbody></table></div></div></div>';
+};
+VIEWS.verify=function(){
+  var q=D.verifs.slice().sort(function(a,b){return (a.status==='pending'?0:1)-(b.status==='pending'?0:1)||b.t-a.t;});
+  return '<div class="page-head"><h1>Verification</h1><p class="sub">Check the documents, then approve or reject. Approved users get the ID verified badge.</p></div><div class="stack">'+
+   (q.length?q.map(function(v){var u=U[v.uid];return '<div class="panel ms-head"><div><h3>'+esc(u.name)+(u.company?' · '+esc(u.company):'')+'</h3><p class="muted small">'+esc(u.kind)+' · '+esc(v.doc)+' · submitted '+rel(v.t)+'</p></div><div class="row">'+(v.status==='pending'?'<button class="btn primary sm" data-act="v-approve" data-id="'+v.id+'">Approve</button><button class="btn danger sm" data-act="v-reject" data-id="'+v.id+'">Reject</button>':pill(v.status==='approved'?'approved':'rejected'))+'</div></div>';}).join(''):empty('Nothing to verify.'))+'</div>';
+};
+VIEWS.approve=function(){
+  var pj=D.jobs.filter(function(j){return j.status==='pending_approval';}),rp=D.reports.filter(function(r){return r.status==='open';});
+  return '<div class="page-head"><h1>Job review</h1><p class="sub">New posts wait here. Reported jobs stay live until you decide.</p></div><div class="stack-lg"><div class="stack"><h2>New posts ('+pj.length+')</h2>'+
+   (pj.length?pj.map(function(j){return '<div class="panel stack"><div class="ms-head"><div><h3><button class="linkish" data-act="open-job" data-id="'+j.id+'">'+esc(j.title)+'</button></h3><p class="muted small">'+esc(U[j.client].company)+' · '+(j.type==='fixed'?money(j.budget):money(j.budget)+'–'+money(j.budgetMax)+'/hr')+'</p></div><div>'+badges(U[j.client])+'</div></div><p class="muted">'+esc(j.desc[0])+'</p><div class="row"><button class="btn primary sm" data-act="j-approve" data-id="'+j.id+'">Approve</button><button class="btn danger sm" data-act="j-reject" data-id="'+j.id+'">Reject</button></div></div>';}).join(''):empty('No posts waiting.'))+'</div>'+
+   '<div class="stack"><h2>Reports ('+rp.length+')</h2>'+(rp.length?rp.map(function(r){var j=byId(D.jobs,r.jobId);return '<div class="panel stack"><div class="ms-head"><div><h3><button class="linkish" data-act="open-job" data-id="'+j.id+'">'+esc(j.title)+'</button></h3><p class="muted small">Reported by '+esc(U[r.by].name)+' · '+rel(r.t)+'</p></div>'+badges(U[j.client])+'</div><p>'+esc(r.reason)+'</p><div class="row"><button class="btn danger sm" data-act="r-remove" data-id="'+r.id+'">Remove job</button><button class="btn sm" data-act="r-dismiss" data-id="'+r.id+'">Dismiss report</button></div></div>';}).join(''):empty('No open reports.'))+'</div></div>';
+};
+function evidence(d){
+  var k=byId(D.contracts,d.kid),m=byId(k.milestones,d.mid),msgs=D.msgs[k.id]||[];
+  return '<div class="evi"><section><h4>Messages ('+msgs.length+')</h4>'+msgs.slice(-5).map(function(x){return '<p><b>'+esc(x.from)+'</b> · '+rel(x.t)+'<br>'+esc(x.text)+'</p>';}).join('')+'</section>'+
+   '<section><h4>Submitted files</h4>'+(m.files.length?m.files.map(function(f){return '<p><b>'+esc(f.file)+'</b> v'+f.version+' · '+rel(f.t)+'<br>'+esc(f.note)+'</p>';}).join(''):'<p>None.</p>')+'</section>'+
+   '<section><h4>Milestone history</h4>'+m.history.map(function(h){return '<p>'+fmtDT(h.t)+' · '+esc(h.text)+'</p>';}).join('')+'</section></div>';
+}
+VIEWS.disputes=function(){
+  var ds=D.disputes.slice().sort(function(a,b){return (a.status==='open'?0:1)-(b.status==='open'?0:1)||b.t-a.t;});
+  return '<div class="page-head"><h1>Disputes</h1><p class="sub">Decide from the record: messages, files and milestone history.</p></div><div class="stack-lg">'+
+   (ds.length?ds.map(function(d){var k=byId(D.contracts,d.kid),m=byId(k.milestones,d.mid);
+     return '<div class="panel stack"><div class="ms-head"><div><h3>'+esc(m.title)+' · '+money(m.amount)+'</h3><p class="muted small"><button class="linkish" data-act="open-contract" data-id="'+k.id+'" style="color:var(--accent)">'+esc(k.title)+'</button> · opened by the '+d.openedBy+' '+rel(d.t)+'</p></div>'+pill(d.status)+'</div><p><b>Reason:</b> '+esc(d.reason)+'</p>'+evidence(d)+
+      (d.status==='open'?'<form class="form" data-form="resolve" data-id="'+d.id+'"><label>Decision note (shown to both sides)<textarea name="note" rows="2" required></textarea></label><div class="row"><button class="btn primary sm" name="outcome" value="release">Release to freelancer</button><button class="btn sm" name="outcome" value="split">Split 50/50</button><button class="btn danger sm" name="outcome" value="refund">Refund client</button></div></form>':'<p class="muted"><b>Outcome:</b> '+esc(d.outcome)+'. '+esc(d.note)+'</p>')+'</div>';}).join(''):empty('No disputes.'))+'</div>';
+};
+VIEWS.audit=function(){
+  return '<div class="page-head"><h1>Audit log</h1><p class="sub">Every verification, payment and dispute decision is recorded here.</p></div><div class="panel"><div class="tbl-wrap"><table><thead><tr><th>When</th><th>By</th><th>Event</th></tr></thead><tbody>'+
+   D.logs.slice(0,120).map(function(l){return '<tr><td class="mono small" style="white-space:nowrap">'+fmtDT(l.t)+'</td><td><span class="pill">'+esc(l.who)+'</span></td><td>'+esc(l.text)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+};
+
+/* ---------- render ---------- */
+function whoHTML(){
+  var c=cur();
+  return '<div class="roles" role="group" aria-label="Viewing as">'+['freelancer','client','admin'].map(function(r){return '<button class="role-btn" data-act="role" data-role="'+r+'" aria-pressed="'+(S.role===r)+'">'+ROLE_LABEL[r]+'</button>';}).join('')+'</div><span class="avatar" aria-hidden="true">'+esc(initials(c.name))+'</span><span class="who-name small">'+esc(c.name)+'</span>';
+}
+function isActive(v){
+  return S.view===v||(S.view==='job'&&((S.role==='freelancer'&&v==='browse')||(S.role==='client'&&v==='jobs')||(S.role==='admin'&&v==='approve')))||(S.view==='contract'&&v==='contracts');
+}
+function render(){
+  $('#who').innerHTML=whoHTML();
+  $('#nav').innerHTML=NAV[S.role].map(function(n){return '<button class="nav-btn" data-act="go" data-view="'+n[0]+'"'+(isActive(n[0])?' aria-current="page"':'')+'>'+n[1]+'</button>';}).join('');
+  $('#main').innerHTML=(VIEWS[S.view]||VIEWS.home)();
+  if(S.view==='browse')renderJobList();
+  if(S.view==='earnings')renderPlanner();
+  var th=$('#thread');if(th)th.scrollTop=th.scrollHeight;
+}
+function go(view,extra){
+  S.view=view;S.openForm=null;S.hire=null;S.reportOpen=false;
+  if(extra)Object.keys(extra).forEach(function(k){S[k]=extra[k];});
+  render();window.scrollTo(0,0);
+}
+function mh(m,text){m.history.push({t:Date.now(),text:text});}
+
+/* ---------- actions ---------- */
+ACT.go=function(d){go(d.view);};
+ACT.role=function(d){S.role=d.role;S.view=d.role==='admin'?'admin':'home';S.openForm=null;S.hire=null;render();window.scrollTo(0,0);};
+ACT['open-job']=function(d){go('job',{jobId:d.id});};
+ACT['back-jobs']=function(){go(S.role==='client'?'jobs':S.role==='admin'?'approve':'browse');};
+ACT['open-contract']=function(d){go('contract',{kid:d.id,tab:'milestones'});};
+ACT.tab=function(d){S.tab=d.tab;S.openForm=null;render();};
+ACT['hire-open']=function(d){S.hire=d.id;render();};
+ACT['close-hire']=function(){S.hire=null;render();};
+ACT['open-form']=function(d){S.openForm={type:d.type,id:d.id};render();};
+ACT['close-form']=function(){S.openForm=null;render();};
+ACT['toggle-report']=function(){S.reportOpen=!S.reportOpen;render();};
+ACT.withdraw=function(d){D.proposals=D.proposals.filter(function(p){return p.id!==d.id;});U.f1.connects+=0;toast('Proposal withdrawn.');render();};
+ACT.invite=function(d){log('client','Invitation sent to '+U[d.id].name,null);toast('Invitation sent to '+U[d.id].name+'.');};
+function ctx(d){var k=byId(D.contracts,d.kid);return {k:k,m:k&&d.mid?byId(k.milestones,d.mid):null};}
+ACT.fund=function(d){var x=ctx(d);x.m.status='funded';mh(x.m,'Escrow funded by client');log('client','Funded escrow for "'+x.m.title+'" ('+money(x.m.amount)+')',x.k.id);toast(money(x.m.amount)+' is now held in escrow.');render();};
+ACT.approve=function(d){var x=ctx(d);x.m.status='released';mh(x.m,'Approved and released');log('client','Approved "'+x.m.title+'" and released '+money(x.m.amount),x.k.id);toast('Released '+money(x.m.amount)+'. '+U[x.k.freelancer].name.split(' ')[0]+' receives '+money(net(x.m.amount))+' after the service fee.');checkComplete(x.k);render();};
+ACT['accept-ms']=function(d){var x=ctx(d);x.m.status='unfunded';mh(x.m,'Scope change accepted');log(S.role,'Accepted new milestone "'+x.m.title+'"',x.k.id);toast('Milestone accepted. It must be funded before work starts.');render();};
+ACT['decline-ms']=function(d){var x=ctx(d);x.k.milestones=x.k.milestones.filter(function(m){return m.id!==x.m.id;});log(S.role,'Declined proposed milestone "'+x.m.title+'"',x.k.id);toast('Milestone declined.');render();};
+ACT['timer-start']=function(d){
+  if(S.tracker)return;S.tracker={kid:d.kid,secs:0};
+  timerId=setInterval(function(){if(!S.tracker)return;S.tracker.secs+=1;var el=$('#trk-clock');if(el)el.textContent=hm(S.tracker.secs);},1000);render();
+};
+ACT['timer-stop']=function(){
+  var tr=S.tracker;if(!tr)return;var k=byId(D.contracts,tr.kid),memo=($('#trk-memo')||{}).value||'Tracked session';
+  clearInterval(timerId);S.tracker=null;
+  var allowed=Math.max(0,k.weeklyLimit*60-weekMin(k)),mins=Math.min(Math.max(1,tr.secs),allowed);
+  if(mins<=0){toast('Weekly limit of '+k.weeklyLimit+' hours reached. Nothing was logged.');render();return;}
+  k.time.push({id:uid('e'),t:Date.now(),minutes:mins,activity:55+Math.floor(Math.random()*36),memo:memo,paid:false});
+  log('freelancer','Logged '+hm(mins)+' on "'+k.title+'"',k.id);
+  toast(mins<tr.secs?'Logged '+hm(mins)+'. Hours above the weekly limit were not counted.':'Logged '+hm(mins)+'.');render();
+};
+ACT['pay-hours']=function(d){var k=byId(D.contracts,d.kid),mins=unpaidMin(k),amt=mins/60*k.rate;k.time.forEach(function(e){e.paid=true;});log('client','Approved and paid '+hm(mins)+' ('+money(amt)+') on "'+k.title+'"',k.id);toast('Paid '+money(amt)+'. Freelancer receives '+money(net(amt))+' after the service fee.');render();};
+ACT['end-contract']=function(d){var k=byId(D.contracts,d.kid);k.status='completed';log('client','Ended contract "'+k.title+'"',k.id);S.tab='review';toast('Contract ended. You can now leave a review.');render();};
+ACT['verify-id']=function(){var u=cur();u.idStatus='pending';D.verifs.push({id:uid('v'),uid:u.id,doc:'Government ID and selfie',t:Date.now(),status:'pending'});log(S.role,'ID verification requested by '+u.name,null);toast('Sent to an administrator for review.');render();};
+ACT['verify-pay']=function(){U.c1.paymentVerified=true;log('client','Payment method verified for '+U.c1.company,null);toast('Payment method verified.');render();};
+ACT['v-approve']=function(d){var v=byId(D.verifs,d.id);v.status='approved';U[v.uid].idStatus='verified';log('admin','Approved ID verification for '+U[v.uid].name,null);toast('Verified '+U[v.uid].name+'.');render();};
+ACT['v-reject']=function(d){var v=byId(D.verifs,d.id);v.status='rejected';U[v.uid].idStatus='rejected';log('admin','Rejected ID verification for '+U[v.uid].name,null);toast('Rejected.');render();};
+ACT['j-approve']=function(d){var j=byId(D.jobs,d.id);j.status='open';j.t=Date.now();log('admin','Approved job "'+j.title+'"',null);toast('Job approved and live.');if(S.view==='job')S.view='approve';render();};
+ACT['j-reject']=function(d){var j=byId(D.jobs,d.id);j.status='rejected';log('admin','Rejected job "'+j.title+'"',null);toast('Job rejected.');if(S.view==='job')S.view='approve';render();};
+ACT['r-remove']=function(d){var r=byId(D.reports,d.id);r.status='closed';byId(D.jobs,r.jobId).status='removed';log('admin','Removed reported job "'+byId(D.jobs,r.jobId).title+'"',null);toast('Job removed.');render();};
+ACT['r-dismiss']=function(d){var r=byId(D.reports,d.id);r.status='closed';log('admin','Dismissed a report on "'+byId(D.jobs,r.jobId).title+'"',null);toast('Report dismissed.');render();};
+
+/* ---------- forms ---------- */
+FORM['hero-search']=function(fd){S.q=String(fd.get('q')||'');S.cat='All';S.type='any';S.ver=false;go('browse');};
+FORM.apply=function(fd,f,d){
+  var j=byId(D.jobs,d.id);
+  D.proposals.push({id:uid('p'),jobId:j.id,fid:'f1',bid:+fd.get('bid'),days:+fd.get('days'),letter:String(fd.get('letter')),status:'submitted',t:Date.now()});
+  U.f1.connects-=CONNECT_COST;log('freelancer','Proposal sent for "'+j.title+'"',null);toast('Proposal sent. '+CONNECT_COST+' Connects used, '+U.f1.connects+' left.');render();
+};
+FORM.report=function(fd,f,d){
+  var j=byId(D.jobs,d.id);D.reports.push({id:uid('r'),jobId:j.id,by:'f1',reason:fd.get('reason')+': '+fd.get('text'),t:Date.now(),status:'open'});
+  S.reportOpen=false;log('freelancer','Reported job "'+j.title+'"',null);toast('Report sent to the admin team.');render();
+};
+FORM.hire=function(fd,f,d){
+  var p=byId(D.proposals,d.pid),j=byId(D.jobs,p.jobId),k={id:uid('k'),title:j.title,client:'c1',freelancer:p.fid,type:j.type,status:'active',t:Date.now(),milestones:[]};
+  if(j.type==='fixed'){
+    var n=+fd.get('n'),names={1:['Full delivery'],2:['Core build','Delivery and handover'],3:['Setup and design','Core build','Testing and handover']}[n],base=Math.floor(p.bid/n),i;
+    for(i=0;i<n;i++)k.milestones.push({id:uid('m'),title:names[i],amount:i===n-1?p.bid-base*(n-1):base,status:'unfunded',files:[],history:[]});
+  }else{k.rate=p.bid;k.weeklyLimit=+fd.get('limit')||20;k.time=[];}
+  D.contracts.unshift(k);D.msgs[k.id]=[];
+  D.proposals.forEach(function(q){if(q.jobId===j.id)q.status=q.id===p.id?'hired':'declined';});
+  j.status='in_progress';log('client','Hired '+U[p.fid].name+' for "'+j.title+'"',k.id);toast('Contract created. Fund the first milestone to start work.');
+  go('contract',{kid:k.id,tab:'milestones'});
+};
+FORM.post=function(fd){
+  var type=fd.get('type'),b=+fd.get('budget'),skills=String(fd.get('skills')||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var j={id:uid('j'),client:'c1',title:String(fd.get('title')),cat:String(fd.get('cat')),type:type,budget:b,budgetMax:type==='hourly'?Math.max(b,+fd.get('budgetMax')||b):undefined,skills:skills.length?skills:['General'],days:+fd.get('days')||14,status:'pending_approval',t:Date.now(),desc:String(fd.get('desc')).split(/\n+/)};
+  D.jobs.unshift(j);log('client','Job "'+j.title+'" sent for admin review',null);toast('Sent for admin review. You will see it under My jobs.');go('jobs');
+};
+FORM['submit-work']=function(fd,f,d){
+  var x=ctx(d),file=fd.get('file'),name=file&&file.name?file.name:'deliverable.zip',v=x.m.files.length+1;
+  x.m.files.push({file:name,note:String(fd.get('note')),t:Date.now(),version:v});x.m.status='submitted';mh(x.m,'Work submitted (v'+v+')');
+  log('freelancer','Submitted "'+x.m.title+'" (v'+v+')',x.k.id);S.openForm=null;toast('Submitted. The client has 14 days to review.');render();
+};
+FORM.revision=function(fd,f,d){var x=ctx(d);x.m.status='revision';mh(x.m,'Revision requested: '+fd.get('text'));log('client','Requested a revision on "'+x.m.title+'"',x.k.id);S.openForm=null;toast('Revision requested.');render();};
+FORM.dispute=function(fd,f,d){
+  var x=ctx(d);x.m.status='disputed';x.k.status='disputed';mh(x.m,'Dispute opened by '+S.role);
+  D.disputes.push({id:uid('d'),kid:x.k.id,mid:x.m.id,openedBy:S.role,reason:String(fd.get('text')),t:Date.now(),status:'open'});
+  log(S.role,'Dispute opened on "'+x.m.title+'"',x.k.id);S.openForm=null;toast('Dispute opened. Escrow is frozen until an admin decides.');render();
+};
+FORM.scope=function(fd,f,d){
+  var k=byId(D.contracts,d.kid);k.milestones.push({id:uid('m'),title:String(fd.get('title')),amount:+fd.get('amount'),status:'proposed',by:S.role,files:[],history:[{t:Date.now(),text:'Proposed by '+S.role}]});
+  log(S.role,'Proposed new milestone "'+fd.get('title')+'" ('+money(+fd.get('amount'))+')',k.id);S.openForm=null;toast('Sent to the other side for approval.');render();
+};
+FORM['send-msg']=function(fd,f,d){
+  var file=fd.get('file');(D.msgs[d.kid]=D.msgs[d.kid]||[]).push({id:uid('g'),from:S.role,text:String(fd.get('text')),files:file&&file.name?[file.name]:[],t:Date.now()});
+  log(S.role,'Message sent'+(file&&file.name?' with file '+file.name:''),d.kid);render();
+};
+FORM.review=function(fd,f,d){
+  var k=byId(D.contracts,d.kid),role=S.role,to=U[role==='client'?k.freelancer:k.client],stars=+fd.get('stars');
+  D.reviews.push({id:uid('rv'),kid:k.id,fromRole:role,author:role==='client'?U[k.client].company:U[k.freelancer].name,to:to.id,stars:stars,text:String(fd.get('text')),t:Date.now()});
+  to.rating=to.jobs?(to.rating*to.jobs+stars)/(to.jobs+1):stars;to.jobs+=1;log(role,'Review posted for '+to.name,k.id);toast('Review posted.');render();
+};
+FORM.resolve=function(fd,f,d,sub){
+  var ds=byId(D.disputes,d.id),k=byId(D.contracts,ds.kid),m=byId(k.milestones,ds.mid),o=sub&&sub.value||'release';
+  m.status=o==='release'?'released':o==='refund'?'refunded':'split';ds.status='resolved';
+  ds.outcome=o==='release'?'Released to freelancer':o==='refund'?'Refunded to client':'Split 50/50';ds.note=String(fd.get('note'));
+  mh(m,'Admin decision: '+ds.outcome);k.status='active';checkComplete(k);
+  log('admin','Dispute on "'+m.title+'" resolved: '+ds.outcome,k.id);toast('Dispute resolved: '+ds.outcome+'.');render();
+};
+
+/* ---------- events ---------- */
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el)return;
+  var fn=ACT[el.dataset.act];if(fn){e.preventDefault();fn(el.dataset,el);}
+});
+document.addEventListener('submit',function(e){
+  var f=e.target.closest('form[data-form]');if(!f)return;
+  e.preventDefault();var fn=FORM[f.dataset.form];if(fn)fn(new FormData(f),f,f.dataset,e.submitter);
+});
+document.addEventListener('input',function(e){
+  var el=e.target.closest('[data-input]');if(!el)return;
+  var k=el.dataset.input;
+  if(k==='q'){S.q=el.value;renderJobList();}
+  else if(k==='cat'){S.cat=el.value;renderJobList();}
+  else if(k==='type'){S.type=el.value;renderJobList();}
+  else if(k==='ver'){S.ver=el.checked;renderJobList();}
+  else if(k==='bidpreview'){var p=$('#feeprev');if(p)p.innerHTML=feePreview(el.value,el.dataset.type);}
+  else if(k==='fname'){var s=el.closest('label').querySelector('span');if(s)s.textContent=el.files[0]?el.files[0].name:'Attach file';}
+  else if(k==='plan'){
+    var n=el.name,v=+el.value;
+    if(n==='rate')S.plan.rate=v;else if(n==='fee')S.plan.fee=v;else S.plan.c[n.slice(2)]=v;
+    renderPlanner();
+  }
+});
+render();
+})();
+</script>
+
+</body></html>
